@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Provider {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  courses Course[]
+
+  @@map("providers")
+}
+
+model Course {
+  id           Int         @id @default(autoincrement())
+  providerId   Int         @map("provider_id")
+  title        String      @db.VarChar(255)
+  description  String?     @db.Text
+  level        CourseLevel
+  thumbnailUrl String?     @map("thumbnail_url") @db.Text
+  isActive     Boolean     @default(true) @map("is_active")
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  exams    Exam[]
+
+  @@map("courses")
+}
+
+enum CourseLevel {
+  Practitioner
+  Associate
+  Professional
+  Expert
+}
+
+model Exam {
+  id              Int      @id @default(autoincrement())
+  courseId        Int      @map("course_id")
+  title           String   @db.VarChar(255)
+  description     String?  @db.Text
+  durationMinutes Int      @map("duration_minutes")
+  totalQuestions  Int      @map("total_questions")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  examResults ExamResult[]
+
+  @@map("exams")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String?  @unique @db.VarChar(255)
+  fullName  String?  @map("full_name") @db.VarChar(100)
+  avatarUrl String?  @map("avatar_url") @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  examResults ExamResult[]
+
+  @@map("users")
+}
+
+model Question {
+  id          Int      @id @default(autoincrement())
+  examId      Int      @map("exam_id")
+  content     String   @db.Text
+  explanation String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  exam    Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  answers Answer[]
+
+  @@map("questions")
+}
+
+model Answer {
+  id         Int     @id @default(autoincrement())
+  questionId Int     @map("question_id")
+  content    String  @db.Text
+  isCorrect  Boolean @default(false) @map("is_correct")
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("answers")
+}
+
+model ExamResult {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  examId         Int      @map("exam_id")
+  score          Int
+  correctCount   Int      @map("correct_count")
+  totalQuestions Int      @map("total_questions")
+  completedAt    DateTime @default(now()) @map("completed_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam Exam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@map("exam_results")
+}
