@@ -59,6 +59,7 @@ model Exam {
 model User {
   id        Int      @id @default(autoincrement())
   email     String?  @unique @db.VarChar(255)
+  password  String?  @db.VarChar(255)
   fullName  String?  @map("full_name") @db.VarChar(100)
   avatarUrl String?  @map("avatar_url") @db.Text
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz

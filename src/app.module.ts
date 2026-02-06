@@ -1,10 +1,22 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
+import { PrismaModule } from './prisma/prisma.module.js';
+import { AuthModule } from './auth/auth.module.js';
 
 @Module({
-  imports: [],
+  imports: [PrismaModule, AuthModule],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
+
+/*
+khai báo các controller, service, của module đó để NestJS biết và khởi tạo
+các module khác có thể sử dụng các service, controller này thông qua @Module
+ví dụ: có AuthModule và UserModule.
+
+Nếu ở UserModule, bạn muốn dùng lại hàm checkPassword() nằm trong AuthService, bạn không thể tự tiện @Inject(AuthService) vào được.
+
+Bạn phải vào UserModule và Import cái AuthModule vào.
+*/
