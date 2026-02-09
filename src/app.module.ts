@@ -8,8 +8,18 @@ import { ExamModule } from './exam/exam.module.js';
 import { QuestionModule } from './question/question.module.js';
 import { AnswerModule } from './answer/answer.module.js';
 
+import { ExamResultModule } from './exam_result/exam-result.module.js';
+
 @Module({
-  imports: [PrismaModule, AuthModule, CourseModule, ExamModule, QuestionModule, AnswerModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    CourseModule,
+    ExamModule,
+    QuestionModule,
+    AnswerModule,
+    ExamResultModule
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
