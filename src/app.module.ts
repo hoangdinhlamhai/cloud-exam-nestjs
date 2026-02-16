@@ -10,6 +10,7 @@ import { AnswerModule } from './answer/answer.module.js';
 
 import { ExamResultModule } from './exam_result/exam-result.module.js';
 import { NoteModule } from './note/note.module.js';
+import { ProfileModule } from './profile/profile.module.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { NoteModule } from './note/note.module.js';
     AnswerModule,
     ExamResultModule,
     NoteModule,
+    ProfileModule,
   ],
   controllers: [AppController],
   providers: [AppService],

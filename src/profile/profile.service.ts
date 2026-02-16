@@ -1,13 +1,17 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { UploadService } from "../upload/upload.service";
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ProfileService {
     private readonly SALT_ROUNDS = 10;
 
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly uploadService: UploadService,
+    ) { }
 
     async getProfile(userId: number) {
         return this.prisma.user.findUnique({
@@ -52,6 +56,43 @@ export class ProfileService {
         const updatedUser = await this.prisma.user.update({
             where: { id: userId },
             data: updateData,
+            select: {
+                id: true,
+                email: true,
+                fullName: true,
+                avatarUrl: true,
+                createdAt: true,
+            },
+        });
+
+        return updatedUser;
+    }
+
+    /**
+     * Upload avatar image to R2 and update user profile
+     */
+    async uploadAvatar(userId: number, file: Express.Multer.File) {
+        // Get current user to check for existing avatar
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        // Upload new avatar to R2
+        const avatarUrl = await this.uploadService.uploadFile(file, 'avatars');
+
+        // Delete old avatar from R2 if exists
+        if (user.avatarUrl && user.avatarUrl.includes('hoangdinhlamhai.works')) {
+            await this.uploadService.deleteFile(user.avatarUrl);
+        }
+
+        // Update user with new avatar URL
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: { avatarUrl },
             select: {
                 id: true,
                 email: true,

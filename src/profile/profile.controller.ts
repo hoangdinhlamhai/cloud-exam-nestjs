@@ -1,4 +1,15 @@
-import { Controller, Get, Patch, Body, Request, UseGuards } from "@nestjs/common";
+import {
+    Controller,
+    Get,
+    Patch,
+    Post,
+    Body,
+    Request,
+    UseGuards,
+    UseInterceptors,
+    UploadedFile,
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { ProfileService } from "./profile.service";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
@@ -11,11 +22,22 @@ export class ProfileController {
     @Get()
     getProfile(@Request() req: any) {
         return this.profileService.getProfile(req.user.userId);
-        //id user được lấy từ token
     }
 
     @Patch()
     updateProfile(@Request() req: any, @Body() updateProfileDto: UpdateProfileDto) {
         return this.profileService.updateProfile(req.user.userId, updateProfileDto);
+    }
+
+    /**
+     * Upload avatar image
+     * POST /api/profile/avatar
+     * Content-Type: multipart/form-data
+     * Body: file (image)
+     */
+    @Post('avatar')
+    @UseInterceptors(FileInterceptor('file'))
+    uploadAvatar(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
+        return this.profileService.uploadAvatar(req.user.userId, file);
     }
 }
