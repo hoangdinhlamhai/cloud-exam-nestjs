@@ -4,7 +4,7 @@ import { CreateNoteDto } from "./dto/create-note.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @Controller('api/notes')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard) //buộc phải login
 export class NoteController {
     constructor(private readonly noteService: NoteService) { }
 
