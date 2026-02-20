@@ -226,14 +226,19 @@ export class ExamResultService {
      * Get user statistics
      */
     async getUserStats(userId: number) {
-        const results = await this.prisma.examResult.findMany({
-            where: { userId },
-            select: {
-                score: true,
-                correctCount: true,
-                totalQuestions: true,
-            },
-        });
+        const [results, totalNotes] = await Promise.all([
+            this.prisma.examResult.findMany({
+                where: { userId },
+                select: {
+                    score: true,
+                    correctCount: true,
+                    totalQuestions: true,
+                },
+            }),
+            this.prisma.note.count({
+                where: { userId },
+            }),
+        ]);
 
         if (results.length === 0) {
             return {
@@ -243,6 +248,7 @@ export class ExamResultService {
                 totalQuestions: 0,
                 passedExams: 0,
                 failedExams: 0,
+                totalNotes,
             };
         }
 
@@ -262,6 +268,7 @@ export class ExamResultService {
             totalQuestions,
             passedExams,
             failedExams,
+            totalNotes,
         };
     }
 }

@@ -104,4 +104,41 @@ export class ProfileService {
 
         return updatedUser;
     }
+
+    /**
+     * Delete avatar image from R2 and clear avatarUrl
+     */
+    async deleteAvatar(userId: number) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        if (!user.avatarUrl) {
+            throw new BadRequestException('No avatar to delete');
+        }
+
+        // Delete from R2
+        if (user.avatarUrl.includes('hoangdinhlamhai.works')) {
+            await this.uploadService.deleteFile(user.avatarUrl);
+        }
+
+        // Set avatarUrl to null
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: { avatarUrl: null },
+            select: {
+                id: true,
+                email: true,
+                fullName: true,
+                avatarUrl: true,
+                createdAt: true,
+            },
+        });
+
+        return updatedUser;
+    }
 }

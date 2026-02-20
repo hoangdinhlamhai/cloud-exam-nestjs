@@ -3,6 +3,7 @@ import {
     Get,
     Patch,
     Post,
+    Delete,
     Body,
     Request,
     UseGuards,
@@ -32,12 +33,19 @@ export class ProfileController {
     /**
      * Upload avatar image
      * POST /api/profile/avatar
-     * Content-Type: multipart/form-data
-     * Body: file (image)
      */
     @Post('avatar')
     @UseInterceptors(FileInterceptor('file'))
     uploadAvatar(@Request() req: any, @UploadedFile() file: Express.Multer.File) {
         return this.profileService.uploadAvatar(req.user.userId, file);
+    }
+
+    /**
+     * Delete avatar image
+     * DELETE /api/profile/avatar
+     */
+    @Delete('avatar')
+    deleteAvatar(@Request() req: any) {
+        return this.profileService.deleteAvatar(req.user.userId);
     }
 }
