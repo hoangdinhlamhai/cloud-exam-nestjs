@@ -21,11 +21,13 @@ export class ExamController {
         @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
         @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
         @Query('courseId') courseId?: string,
+        @Query('providerId') providerId?: string,
     ) {
         return this.examService.findAll(
             page,
             limit,
             courseId ? parseInt(courseId, 10) : undefined,
+            providerId ? parseInt(providerId, 10) : undefined,
         );
     }
 

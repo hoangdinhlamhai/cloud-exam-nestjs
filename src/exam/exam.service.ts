@@ -61,10 +61,13 @@ export class ExamService {
         page: number = 1,
         limit: number = 10,
         courseId?: number,
+        providerId?: number,
     ): Promise<ExamListResponse> {
         const skip = (page - 1) * limit;
 
-        const where = courseId ? { courseId } : {};
+        const where: { courseId?: number; course?: { providerId: number } } = {};
+        if (courseId) where.courseId = courseId;
+        if (providerId) where.course = { providerId };
 
         const [exams, total] = await Promise.all([
             this.prisma.exam.findMany({
