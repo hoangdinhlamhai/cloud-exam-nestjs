@@ -3,7 +3,9 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { GoogleLoginDto } from './dto/google-login.dto.js';
 import * as bcrypt from 'bcrypt';
+import { OAuth2Client } from 'google-auth-library';
 
 export interface JwtPayload {
     sub: number;
@@ -23,11 +25,14 @@ export interface AuthResponse {
 @Injectable()
 export class AuthService {
     private readonly SALT_ROUNDS = 10;
+    private readonly googleClient: OAuth2Client;
 
     constructor(
         private readonly prisma: PrismaService,
         private readonly jwtService: JwtService,
-    ) { }
+    ) { 
+        this.googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    }
 
     async register(registerDto: RegisterDto): Promise<AuthResponse> {
         const { email, password, fullName } = registerDto;
@@ -98,6 +103,69 @@ export class AuthService {
             },
             accessToken,
         };
+    }
+
+    async googleLogin(googleLoginDto: GoogleLoginDto): Promise<AuthResponse> {
+        try {
+            const ticket = await this.googleClient.verifyIdToken({
+                idToken: googleLoginDto.credential,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+
+            const payload = ticket.getPayload();
+            if (!payload) {
+                throw new UnauthorizedException('Invalid Google token');
+            }
+
+            const { sub: googleId, email, name: fullName, picture: avatarUrl } = payload;
+
+            // Find user by googleId
+            let user = await this.prisma.user.findUnique({
+                where: { googleId },
+            });
+
+            // If no user found by googleId, check if email exists to link, or create new
+            if (!user) {
+                if (email) {
+                    user = await this.prisma.user.findUnique({
+                        where: { email },
+                    });
+                }
+
+                if (user) {
+                    // Link existing email to Google account
+                    user = await this.prisma.user.update({
+                        where: { id: user.id },
+                        data: { googleId, authProvider: 'google' },
+                    });
+                } else {
+                    // Create new user
+                    user = await this.prisma.user.create({
+                        data: {
+                            email: email || null,
+                            fullName,
+                            avatarUrl,
+                            googleId,
+                            authProvider: 'google',
+                        },
+                    });
+                }
+            }
+
+            const accessToken = this.generateToken(user.id, user.email || '');
+
+            return {
+                user: {
+                    id: user.id,
+                    email: user.email || '',
+                    fullName: user.fullName,
+                    avatarUrl: user.avatarUrl,
+                },
+                accessToken,
+            };
+        } catch (error) {
+            throw new UnauthorizedException('Invalid Google credentials');
+        }
     }
 
     async validateUser(userId: number) {
