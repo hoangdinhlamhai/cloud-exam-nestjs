@@ -1,4 +1,5 @@
 import { PrismaClient, CourseLevel } from '@prisma/client';
+import { alignSeedSequences } from './seed-sequences';
 import { coursesData } from './seed-data/course/courses';
 // Legacy exam imports (keeping for backward compat)
 import { awsCloudPractitionerExam1 } from './seed-data/aws-cloud-practitioner-exam1';
@@ -309,6 +310,11 @@ async function main() {
             totalQuestions++;
         }
     }
+
+    const [{ schema }] = await prisma.$queryRaw<Array<{ schema: string }>>`
+        SELECT current_schema() AS schema
+    `;
+    await alignSeedSequences(prisma, schema);
 
     console.log(`\n🎉 Seed completed successfully!`);
     console.log(`📊 Summary:`);
